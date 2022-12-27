@@ -1,0 +1,20 @@
+# Hydra configs
+hydra:
+  run:
+    dir: /mlcube/workspace/outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+    output_subdir: null
+# Parameters
+params:
+  seed: 0
+  n_epochs: 4
+  num_workers: 4
+  batch_size_train: 32
+  batch_size_test: 64
+  optimizer: sgd
+  learning_rate: 0.01
+  momentum: 0.5
+  log_interval: 1000
+# data path
+output:
+  data_path: /mlcube/workspace/data
+  model_path: /mlcube/workspace/model
