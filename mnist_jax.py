@@ -1,7 +1,6 @@
 # Baisc imports
 import os
 import time
-import pickle
 import logging
 
 # Set env variables
@@ -21,7 +20,12 @@ import jax.numpy as jnp
 from flax import linen as nn
 from flax.training import train_state, checkpoints
 import optax
+from ml_collections import config_dict
 from omegaconf import DictConfig, OmegaConf
+
+
+# A logger for this file
+log = logging.getLogger(__name__)
 
 
 class CNN(nn.Module):
@@ -77,7 +81,7 @@ def create_train_state(rng, optimizer_name, learning_rate, momentum):
     elif optimizer_name == "sgd":
         tx = optax.sgd(learning_rate, momentum)
     else:
-        logging.error("Sorry we only support: `adam` or `sgd`")
+        log.error("Sorry we only support: `adam` or `sgd`")
     tx = optax.sgd(learning_rate, momentum)
     return train_state.TrainState.create(
         apply_fn=cnn.apply, params=params, tx=tx)
@@ -139,7 +143,7 @@ def train_epoch(state, train_ds, epoch, rng):
       for k in batch_metrics_np[0]} # jnp.mean does not work on lists
 
   end_time = time.time() - start
-  logging.info('train epoch: %d, time %.4f,, loss: %.4f, accuracy: %.2f' % (
+  log.info('train epoch: %d, time %.4fs, loss: %.4f, accuracy: %.2f' % (
       epoch, end_time, epoch_metrics_np['loss'], epoch_metrics_np['accuracy'] * 100))
   return state, rng
 
@@ -209,9 +213,21 @@ def main(cfg : DictConfig) -> None:
     
     Args:
      cfg (DictConfig): configs for the training.
-    """
+    """    
+    # Info about device
+    if jax.default_backend() != "cpu":
+        log.info("Devices we are using ", jax.devices())
+    else:
+        log.info("Devices we are using is CPU :/")
+        
+    # Freeze and wrap cfg in more interesting package
+    cfg = config_dict.FrozenConfigDict(OmegaConf.to_object(cfg))
     # Logging params
-    logging.info(OmegaConf.to_yaml(cfg.params))
+    log.info(cfg.params)
+    
+    # Creating dirs
+    os.makedirs(cfg.output.data_path, exist_ok=True)
+    os.makedirs(cfg.output.model_path, exist_ok=True)
     
     # Set seed
     random.seed(cfg.params.seed)
@@ -236,11 +252,13 @@ def main(cfg : DictConfig) -> None:
                 [
                     torchvision.transforms.ToTensor(),
                     torchvision.transforms.Normalize((0.1307,), (0.3081,)),
+                    image_to_numpy
                 ]
             ),
         ),
         batch_size=cfg.params.batch_size_train,
         shuffle=True,
+        collate_fn=numpy_collate,
         num_workers=cfg.params.num_workers,
         worker_init_fn=seed_worker, 
         generator=g_train,
@@ -255,11 +273,13 @@ def main(cfg : DictConfig) -> None:
                 [
                     torchvision.transforms.ToTensor(),
                     torchvision.transforms.Normalize((0.1307,), (0.3081,)),
+                    image_to_numpy
                 ]
             ),
         ),
         batch_size=cfg.params.batch_size_test,
         shuffle=False,
+        collate_fn=numpy_collate,
         num_workers=cfg.params.num_workers,
         worker_init_fn=seed_worker, 
         generator=g_test,
@@ -277,7 +297,7 @@ def main(cfg : DictConfig) -> None:
         state, rng = train_epoch(state, train_loader, epoch, rng)
         # Evaluate on the test set after each training epoch
         test_loss, test_accuracy, end_time = eval_model(state.params, test_loader)
-        logging.info(' test epoch: %d, time: %.4f, loss: %.2f, accuracy: %.2f' % (
+        log.info(' test epoch: %d, time: %.4fs, loss: %.2f, accuracy: %.2f' % (
             epoch, end_time, test_loss, test_accuracy * 100))
         # Save the model parameters
         numpy_rng = np.random.get_state()
@@ -300,12 +320,5 @@ def main(cfg : DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    # Info about device
-    logging.info("Devices we are using")
-    try:
-        logging.info(jax.devices())
-    except:
-        logging.info("is CPU :/")
-    
     # Run main function
     main()

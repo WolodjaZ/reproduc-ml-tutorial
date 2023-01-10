@@ -1,12 +1,16 @@
 #!/bin/bash
 
+# Set workspace env to use in configs
+workspace_path=${2##*=}
+export WORKSPACE_PATH=$workspace_path
+
 case "$1" in
   pytorch)
-    python /workspace/train_pytorch.py ;;
+    python /workspace/mnist_pytorch.py ;;
   tensorflow)
-    python /workspace/train_tensorflow.py ;;
+    python /workspace/mnist_tensorflow.py ;;
   jax)
-    python /workspace/train_jax.py ;;
+    python /workspace/mnist_jax.py ;;
   *)
     echo "Sorry, you need to give one of this string `pytorch`, `tensorflow`, `jax` not $1" ;;
 esac

@@ -1,7 +1,6 @@
 # Baisc imports
 import os
 import time
-import pickle
 import logging
 
 # Set env variables
@@ -18,7 +17,12 @@ import hydra
 
 # Additional imports
 import torchvision
+from ml_collections import config_dict
 from omegaconf import DictConfig, OmegaConf
+
+
+# A logger for this file
+log = logging.getLogger(__name__)
 
 
 class Net(torch.nn.Module):
@@ -79,7 +83,7 @@ def train(network: torch.nn.Module,
         optimizer.step()
     
     end_time = time.time() - start            
-    logging.info(
+    log.info(
         "Train Epoch: {} {:.4f}s\tLoss: {:.6f}".format(
             epoch,
             end_time,
@@ -123,15 +127,16 @@ def test(network: torch.nn.Module,
             correct += pred.eq(target.data.view_as(pred)).sum().detach().cpu()
     end_time = time.time() - start
     test_loss /= len(test_loader.dataset)
-    logging.info(
-        "Test set: {:.4f}s Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)".format(
+    log.info(
+        "Test Epoch: {} {:.4f}s\tLoss: {:.4f}, Accuracy: {}/{} ({:.0f}%)".format(
+            epoch,
             end_time,
             test_loss,
             correct,
             len(test_loader.dataset),
             100.0 * correct / len(test_loader.dataset),
+            )
         )
-    )
 
     # Save the model
     torch.save(
@@ -140,7 +145,7 @@ def test(network: torch.nn.Module,
             "model_state_dict": network.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "torch_rng": torch.get_rng_state(),
-            'torch_cuda_rng': 0 if torch.cuda.is_available() else torch.cuda.get_rng_state(),
+            'torch_cuda_rng': 0 if not torch.cuda.is_available() else torch.cuda.get_rng_state(),
             "numpy_rng": np.random.get_state(),
             "python_state": random.getstate(),
             "generator_dataloader_train": g_train.get_state(),
@@ -157,8 +162,20 @@ def main(cfg : DictConfig) -> None:
     Args:
      cfg (DictConfig): configs for the training.
     """
+    # Info about device
+    try:
+        log.info("Devices we are using ", torch.cuda.get_device_name(), torch.cuda.device_count())
+    except:
+        log.info("Devices we are using is CPU :/")
+        
+    # Freeze and wrap cfg in more interesting package
+    cfg = config_dict.FrozenConfigDict(OmegaConf.to_object(cfg))
     # Logging params
-    logging.info(OmegaConf.to_yaml(cfg.params))
+    log.info(cfg.params)
+    
+    # Creating dirs
+    os.makedirs(cfg.output.data_path, exist_ok=True)
+    os.makedirs(cfg.output.model_path, exist_ok=True)
     
     # Set seed
     random.seed(cfg.params.seed)
@@ -226,7 +243,7 @@ def main(cfg : DictConfig) -> None:
         optimizer = torch.optim.SGD(
             network.parameters(), lr=cfg.params.learning_rate, momentum=cfg.params.momentum)
     else:
-        logging.error("Sorry we only support: `adam` or `sgd`")
+        log.error("Sorry we only support: `adam` or `sgd`")
     
     # Train loop
     for epoch in range(1, cfg.params.n_epochs + 1):
@@ -245,12 +262,5 @@ if __name__ == "__main__":
     # set rest of operation to be deterministic
     torch.use_deterministic_algorithms(mode=True, warn_only=True)
 
-    # Info about device
-    logging.info("Devices we are using")
-    try:
-        logging.info(torch.cuda.get_device_name(), torch.cuda.device_count())
-    except:
-        logging.info("is CPU :/")
-    
     # Run main function
     main()

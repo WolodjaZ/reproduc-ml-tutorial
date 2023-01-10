@@ -1,7 +1,6 @@
 # Baisc imports
 import os
 import time
-import pickle
 import logging
 
 # Set env variables
@@ -12,7 +11,13 @@ import tensorflow as tf
 import hydra
 
 # Additional imports
+from ml_collections import config_dict
 from omegaconf import DictConfig, OmegaConf
+
+
+# A logger for this file
+log = logging.getLogger(__name__)
+
 
 
 @tf.function
@@ -65,8 +70,20 @@ def main(cfg : DictConfig) -> None:
     Args:
      cfg (DictConfig): configs for the training.
     """
+    # Info about device
+    if len(tf.config.list_physical_devices('GPU')) > 0:
+        log.info("Devices we are using ", tf.config.list_physical_devices("GPU"))
+    else:
+        log.info("Devices we are using is CPU :/")
+        
+    # Freeze and wrap cfg in more interesting package
+    cfg = config_dict.FrozenConfigDict(OmegaConf.to_object(cfg))
     # Logging params
-    logging.info(OmegaConf.to_yaml(cfg.params))
+    log.info(cfg.params)
+    
+    # Creating dirs
+    os.makedirs(cfg.output.data_path, exist_ok=True)
+    os.makedirs(cfg.output.model_path, exist_ok=True)
     
     # Set seed
     tf.keras.utils.set_random_seed(cfg.params.seed)    
@@ -122,7 +139,7 @@ def main(cfg : DictConfig) -> None:
         optimizer = tf.keras.optimizers.SGD(
             learning_rate=cfg.params.learning_rate, momentum=cfg.params.momentum)
     else:
-        logging.error("Sorry we only support: `adam` or `sgd`")
+        log.error("Sorry we only support: `adam` or `sgd`")
 
     # Create checkpoint callback
     cp = tf.train.Checkpoint(model=model, optimizer=optimizer)
@@ -143,6 +160,7 @@ def main(cfg : DictConfig) -> None:
         dl_seed = cfg.params.seed + epoch
 
         # Train
+        start_train = time.time()
         for idx, (images, labels) in enumerate(
                 train_loader
                 .shuffle(len(x_train), seed=dl_seed)
@@ -152,18 +170,25 @@ def main(cfg : DictConfig) -> None:
                 model, loss_fn, optimizer, train_loss, train_accuracy, 
                 images, labels)
         
+        train_time = time.time() - start_train
+        
         # Save
         cp.write(os.path.join(cfg.output.model_path, f"tf_models_{epoch}.h5"))
         
         # Test
+        start_test = time.time()
         for images, labels in test_loader:
             test_step(model, loss_fn, test_loss, test_accuracy, images, labels)
 
+        test_time = time.time() - start_test
+        
         # Log
-        print(
+        log.info(
             f"Epoch {epoch}, "
+            f"Time {train_time:.4f}s, "
             f"Loss: {train_loss.result():.4f}, "
             f"Accuracy: {train_accuracy.result():.4f}, "
+            f"Test Time {test_time:.4f}s, "
             f"Test Loss: {test_loss.result():.4f}, "
             f"Test Accuracy: {test_accuracy.result():.4f}"
         )
@@ -177,13 +202,6 @@ if __name__ == "__main__":
 
     # set rest of operation to be deterministic
     tf.config.experimental.enable_op_determinism()
-
-    # Info about device
-    logging.info("Devices we are using")
-    try:
-        logging.info(tf.config.list_physical_devices("GPU"))
-    except:
-        logging.info("is CPU :/")
     
     # Run main function
     main()

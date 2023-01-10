@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM python:3.9-slim
 LABEL author="Vladimir Zaigrajew"
 
 RUN apt-get update && \
@@ -11,9 +11,10 @@ RUN apt-get update && \
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir -r /requirements.txt
 
-COPY train_jax.py /workspace/train_jax.py
-COPY train_pytorch.py /workspace/train_pytorch.py
-COPY train_tensorflow.py /workspace/train_tensorflow.py
+COPY mnist_jax.py /workspace/mnist_jax.py
+COPY mnist_pytorch.py /workspace/mnist_pytorch.py
+COPY mnist_tensorflow.py /workspace/mnist_tensorflow.py
+COPY run.sh /workspace/run.sh
 
 COPY mlcube.yaml /mlcube/mlcube.yaml
 COPY workspace/train.yaml /mlcube/workspace/train.yaml

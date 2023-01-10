@@ -1,8 +1,9 @@
 # Hydra configs
 hydra:
+  output_subdir: null
   run:
-    dir: /mlcube/workspace/outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
-    output_subdir: null
+    dir: ${oc.env:WORKSPACE_PATH}/outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+    
 # Parameters
 params:
   seed: 0
@@ -16,5 +17,5 @@ params:
   log_interval: 1000
 # data path
 output:
-  data_path: /mlcube/workspace/data
-  model_path: /mlcube/workspace/model
+  data_path: ${oc.env:WORKSPACE_PATH}/data
+  model_path: ${oc.env:WORKSPACE_PATH}/model

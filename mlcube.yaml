@@ -19,6 +19,10 @@ platform:
 # Configuration for docker runner (additional options can be configured in system settings file).
 docker:
   image: wolodja55/repro:0.0.1
+  build_context: .
+#  gpu_args: '--gpus=all'
+  build_file: Dockerfile
+  build_strategy: auto
 
 # Configuration for singularity runner (additional options can be configured in system settings 
 # file).
@@ -27,8 +31,18 @@ singularity:
 
 # Section where MLCube tasks are defined.
 tasks:
-  train:
-    # `Train` task. It has one input
+  pytorch:
     parameters:
-      inputs:
-        train_config: {type: string, default: pytorch} # choice: `pytorch`, 'jax', 'tensorflow'
+        inputs:
+          workspace: {type: directory, default: ""}
+    # `pytorch` task. It has one input
+  tensorflow:
+    parameters:
+        inputs:
+          workspace: {type: directory, default: ""}
+    # `tensorflow` task. It has one input
+  jax:
+    parameters:
+        inputs:
+          workspace: {type: directory, default: ""}
+    # `jax` task. It has one input

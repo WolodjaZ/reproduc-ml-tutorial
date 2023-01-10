@@ -1,3 +1,9 @@
+# Ignore everything in workspace directory
+workspace/
+
+# except these two configuration files
+!/workspace/train.yaml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
