@@ -21,7 +21,7 @@ docker:
   image: wolodja55/repro:0.0.1
   build_context: .
 #  gpu_args: '--gpus=all'
-  build_file: Dockerfile
+  build_file: DockerBuildfile
   build_strategy: auto
 
 # Configuration for singularity runner (additional options can be configured in system settings 

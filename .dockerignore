@@ -1,5 +1,7 @@
 # Ignore everything in workspace directory
 workspace/
+# Ignore virtual environment
+venv/
 
 # except these two configuration files
 !/workspace/train.yaml
