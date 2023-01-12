@@ -4,7 +4,7 @@ import time
 import logging
 
 # Set env variables
-os.environ['PYTHONHASHSEED'] = '0'
+os.environ['PYTHONHASHSEED'] = '1'
 # You may need to set this variables by PyTorch. 
 # It may limit overall performance so be aware of it.
 os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':16:8'

@@ -4,7 +4,7 @@ import time
 import logging
 
 # Set env variables
-os.environ['PYTHONHASHSEED'] = '0'
+os.environ['PYTHONHASHSEED'] = '1'
 
 # Main imports
 import tensorflow as tf

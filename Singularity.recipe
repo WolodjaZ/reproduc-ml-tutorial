@@ -1,3 +1,4 @@
+# Base image from docker
 BootStrap: docker
 FROM python:3.9-slim
 
@@ -5,18 +6,16 @@ FROM python:3.9-slim
     Maintainer Vladimir Zaigrajew
 
 %post
+    # Update software
     apt-get update
-    apt-get install -y --no-install-recommends \
-        software-properties-common \
-        python3-dev\
-        curl
-    rm -rf /var/lib/apt/lists/*
-    ln -s /usr/bin/python3 /usr/local/bin/python
 
+    # Install requirements.txt
     pip install --no-cache-dir -r /requirements.txt
 
+    # Make run.sh executable
     chmod +x /workspace/run.sh
 
+# Copy necessary files
 %files
     requirements.txt /requirements.txt
     run.sh /workspace/run.sh
@@ -27,5 +26,6 @@ FROM python:3.9-slim
     mlcube.yaml /mlcube/mlcube.yaml
     workspace/train.yaml /mlcube/workspace/train.yaml
 
+# Run run.sh
 %runscript
     /bin/bash /workspace/run.sh "$@"

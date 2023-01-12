@@ -4,7 +4,7 @@ import time
 import logging
 
 # Set env variables
-os.environ['PYTHONHASHSEED'] = '0'
+os.environ['PYTHONHASHSEED'] = '1'
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
 # Main imports

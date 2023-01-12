@@ -1,21 +1,22 @@
 # Hydra configs
 hydra:
-  output_subdir: null
+  output_subdir: null # Disable Hydra subdir creation 
   run:
-    dir: ${oc.env:WORKSPACE_PATH}/outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${oc.env:WORKSPACE_PATH}/outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S} # Path where Hydra should store logs 
     
-# Parameters
+# Parameters for the pipeline
 params:
-  seed: 0
-  n_epochs: 4
-  num_workers: 4
-  batch_size_train: 32
-  batch_size_test: 64
-  optimizer: sgd
-  learning_rate: 0.01
-  momentum: 0.5
-  log_interval: 1000
+  seed: 0 # Seed value
+  n_epochs: 4 # Number of epoch
+  num_workers: 4 # Number of workers for Dataloaders
+  batch_size_train: 32 # Batch size for train dataset
+  batch_size_test: 64 # Batch size for test dataset
+  optimizer: sgd # Optimizer name
+  learning_rate: 0.01 # Learning rate for optimizer
+  momentum: 0.5 # Momentum also parameter for optimizer
+  log_interval: 1000 # How often should logs be made in training loop
+
 # data path
 output:
-  data_path: ${oc.env:WORKSPACE_PATH}/data
-  model_path: ${oc.env:WORKSPACE_PATH}/model
+  data_path: ${oc.env:WORKSPACE_PATH}/data # Path where data should be stored
+  model_path: ${oc.env:WORKSPACE_PATH}/model # Path where models should be created

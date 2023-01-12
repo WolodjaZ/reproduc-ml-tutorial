@@ -4,6 +4,7 @@
 workspace_path=${2##*=}
 export WORKSPACE_PATH=$workspace_path
 
+# Case statement which file with dedicated framework to run
 case "$1" in
   pytorch)
     python /workspace/mnist_pytorch.py ;;
